@@ -20,8 +20,8 @@ For local testing, serve the folder from a local web server; service workers req
 
 ## Current limitations
 - This is a study tool, not a live poker-site assistant.
-- Image capture is included, but automatic card recognition and continuous live monitoring are not implemented in this first version.
+- Photo-assisted rank OCR is included for one card per photo. Suit confirmation and visual verification remain manual; full-table multi-card recognition and continuous live monitoring are not implemented.
 - Opponents are modelled as random hands; player ranges, betting actions, folds, rake and future betting are not modelled.
 - Equity is a Monte Carlo estimate, so results vary slightly with each run.
 
-All calculations happen in the browser. Hand history is stored locally on the device.
+All calculations happen in the browser. OCR uses Tesseract.js from a CDN and therefore requires internet access; hand history is stored locally on the device.

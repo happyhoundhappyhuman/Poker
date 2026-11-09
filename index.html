@@ -54,11 +54,26 @@ footer{position:fixed;bottom:0;left:0;right:0;padding:9px 14px calc(9px + env(sa
 <section id="capture" class="hidden">
 <div class="card"><h2>Capture a table or screenshot</h2><p class="note">Choose a photo or take a picture. This first version stores the image for reference and lets you enter the visible cards manually. Automatic card recognition is not yet included.</p>
 <input class="field" id="photo" type="file" accept="image/*" capture="environment"><img id="preview" class="hidden" style="width:100%;margin-top:12px;border-radius:12px" alt="Selected poker table image"><div class="actions"><button class="btn secondary" id="toanalyse">Enter cards in analyser</button></div></div>
-<div class="card"><h2>Live camera limitation</h2><p class="note">Android browser camera capture is supported through the file picker. Continuous screen watching and automatic recognition need a later computer-vision module and must comply with the poker site's rules. Use this build for study, practice and post-hand review.</p></div>
+<div class="card">
+<h2>Photo-assisted card scanner</h2>
+<p class="note">Photograph one face-up playing card at a time, filling most of the frame. Browser OCR attempts to read the rank from the top-left corner. Confirm the suit and card before adding it to your hand.</p>
+<input class="field" id="scanfile" type="file" accept="image/*" capture="environment">
+<canvas id="scancanvas" class="hidden"></canvas>
+<div id="scanstatus" class="note" style="margin-top:10px">No card image selected.</div>
+<div class="grid" style="margin-top:12px">
+<label><span class="note">Detected rank (check it)</span><select class="field" id="scanrank"><option value="">Not detected</option><option>A</option><option>K</option><option>Q</option><option>J</option><option>T</option><option>9</option><option>8</option><option>7</option><option>6</option><option>5</option><option>4</option><option>3</option><option>2</option></select></label>
+<label><span class="note">Confirm suit</span><select class="field" id="scansuit"><option value="0">♠ Spades</option><option value="1">♥ Hearts</option><option value="2">♦ Diamonds</option><option value="3">♣ Clubs</option></select></label>
+<label><span class="note">Add to slot</span><select class="field" id="scantarget"><option value="h0">Hole card 1</option><option value="h1">Hole card 2</option><option value="b0">Flop 1</option><option value="b1">Flop 2</option><option value="b2">Flop 3</option><option value="b3">Turn</option><option value="b4">River</option></select></label>
+</div>
+<div class="actions"><button class="btn" id="recognize">Recognise rank</button><button class="btn secondary" id="applyscan" disabled>Add confirmed card</button></div>
+<p class="note">Recognition runs in your browser using Tesseract.js when an internet connection is available. It is an assistive scanner, not guaranteed card vision: glare, perspective, small indices and stylised decks can cause errors. Always verify the card.</p>
+</div>
+<div class="card"><h2>Continuous live camera</h2><p class="note">Android browser camera capture is supported through the file picker. Continuous screen watching and automatic recognition need a later computer-vision module and must comply with the poker site's rules. Use this build for study, practice and post-hand review.</p></div>
 </section>
 <section id="history" class="hidden"><div class="card"><h2>Saved hands</h2><div id="historyList" class="note">No saved hands yet.</div><div class="actions"><button class="btn secondary" id="export">Export history (CSV)</button><button class="btn secondary" id="erase">Clear history</button></div></div></section>
 <section id="guide" class="hidden"><div class="card"><h2>Using PokerIQ</h2><ol class="note"><li>Select your two hole cards.</li><li>Select the community cards visible (0–5).</li><li>Choose the number of opponents and simulation count.</li><li>Calculate to estimate win, tie, loss and equity.</li><li>Optionally enter pot and call sizes to see break-even equity and estimated call EV.</li><li>Save hands to compare decisions during study sessions.</li></ol><h3>What the percentages mean</h3><p class="note"><b>Win:</b> share of simulated deals where your hand finishes ahead of every opponent. <b>Tie:</b> share where at least one opponent finishes level with you for the best result. <b>Equity:</b> your average fraction of the pot, including split pots.</p><h3>Important</h3><p class="note">The simulator assumes opponents' unknown cards are random. It does not model player ranges, betting actions, folds, tells or table dynamics. The output is a mathematical study estimate, not financial advice or a prediction.</p></div></section>
 </main><footer>For learning and hand review · No online-play automation</footer>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 const suits=['♠','♥','♦','♣'], ranks=['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
 const deck=[]; for(let s=0;s<4;s++)for(let r=0;r<13;r++)deck.push({r:r+2,s,txt:ranks[r]+suits[s]});
@@ -95,7 +110,7 @@ let need=5-board.filter(Boolean).length, full=[...board.filter(Boolean),...pool.
 let top=oppScores.reduce((a,b)=>cmp(b,a)>0?b:a,mine);let c=cmp(mine,top);if(c>0){wins++;equity++}else if(c===0){ties++;let tied=1+oppScores.filter(x=>cmp(x,mine)===0).length;equity+=1/tied}else losses++}
 let win=wins/n*100,tie=ties/n*100,lose=losses/n*100,eq=equity/n*100;
 $('win').textContent=win.toFixed(1)+'%';$('tie').textContent=tie.toFixed(1)+'%';$('lose').textContent=lose.toFixed(1)+'%';$('equity').textContent=eq.toFixed(1)+'%';$('equitybar').style.width=eq+'%';
-let visible=[...hole,...board.filter(Boolean)];let current=visible.length>=5?best7(visible):null;$('handrank').textContent=current?('Current made hand: '+names[current[0]]+(board.filter(Boolean).length<3?' · incomplete board; final ranking may change':'')):'Current made hand: not yet rankable (fewer than five cards).';
+let current=best7([...hole,...board.filter(Boolean)]);$('handrank').textContent='Current made hand: '+names[current[0]]+(board.filter(Boolean).length<3?' · incomplete board; final ranking may change':'');
 let pot=+$('pot').value||0,call=+$('call').value||0,odds=(pot+call)>0?call/(pot+call)*100:0,ev=(pot+call)>0?(eq/100*(pot+call)-call):null;
 $('potodds').textContent=(pot+call)>0?odds.toFixed(1)+'%':'Enter pot + call';$('ev').textContent=ev===null?'—':(ev>=0?'+':'')+ev.toFixed(2);
 $('advice').textContent=ev===null?'Enter pot and call amounts to calculate a simplified call EV.':(eq>=odds?'Your estimated equity is above the break-even call threshold.':'Your estimated equity is below the break-even call threshold.')+' This ignores future betting and rake.';
@@ -108,5 +123,32 @@ $('erase').onclick=()=>{if(confirm('Delete all saved hands?')){saved=[];localSto
 $('export').onclick=()=>{let rows=[['date','hole','board','opponents','simulations','win_pct','tie_pct','loss_pct','equity_pct','rank'],...saved.map(h=>[h.date,h.hole.join(' '),h.board.join(' '),h.opp,h.n,h.win.toFixed(2),h.tie.toFixed(2),h.lose.toFixed(2),h.eq.toFixed(2),h.rank])];let csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='pokeriq-history.csv';a.click();URL.revokeObjectURL(a.href)};
 $('photo').onchange=e=>{let f=e.target.files[0];if(f){$('preview').src=URL.createObjectURL(f);$('preview').classList.remove('hidden')}};
 $('toanalyse').onclick=()=>document.querySelector('[data-tab="analyze"]').click();
+
+let scanImage=null;
+$('scanfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{scanImage=img;const c=$('scancanvas');const ctx=c.getContext('2d');const w=img.naturalWidth,h=img.naturalHeight;c.width=w;c.height=h;ctx.drawImage(img,0,0);$('scanstatus').textContent='Image loaded ('+w+' × '+h+'). Press “Recognise rank”.';$('applyscan').disabled=true;};img.src=URL.createObjectURL(f)};
+$('recognize').onclick=async()=>{if(!scanImage){$('scanstatus').textContent='Choose a card image first.';return}if(!window.Tesseract){$('scanstatus').textContent='OCR library did not load. Check your internet connection and reload.';return}
+$('recognize').disabled=true;$('scanstatus').textContent='Reading card corner…';
+try{
+ const c=$('scancanvas'),w=c.width,h=c.height;
+ const cw=Math.max(1,Math.floor(w*.34)),ch=Math.max(1,Math.floor(h*.32));
+ const crop=document.createElement('canvas');crop.width=cw*3;crop.height=ch*3;
+ const cx=crop.getContext('2d');cx.fillStyle='white';cx.fillRect(0,0,crop.width,crop.height);cx.drawImage(c,0,0,cw,ch,0,0,crop.width,crop.height);
+ const result=await Tesseract.recognize(crop,'eng',{logger:m=>{if(m.status==='recognizing text')$('scanstatus').textContent='Recognising… '+Math.round((m.progress||0)*100)+'%'}});
+ const raw=(result.data.text||'').toUpperCase().replace(/[^AKQJT2-9]/g,'');
+ let rank='';for(const ch of raw){if('AKQJT23456789'.includes(ch)){rank=ch;break}}
+ $('scanrank').value=rank||'';
+ $('scanstatus').textContent=rank?'Possible rank: '+rank+'. Confirm rank and suit, then add the card. OCR confidence: '+Math.round(result.data.confidence||0)+'%.':'Could not read a rank. Select it manually from the list.';
+ $('applyscan').disabled=!rank;
+}catch(err){$('scanstatus').textContent='Recognition failed. Select rank and suit manually.';$('applyscan').disabled=false}
+finally{$('recognize').disabled=false}
+};
+$('scanrank').onchange=()=>{$('applyscan').disabled=!$('scanrank').value};
+$('applyscan').onclick=()=>{let rank=$('scanrank').value;if(!rank){alert('Choose or confirm a rank first.');return}
+const suit=+$('scansuit').value, r='23456789TJQKA'.indexOf(rank)+2, card={r,s:suit,txt:rank+suits[suit]};
+let target=$('scantarget').value,arr=target[0]==='h'?hole:board,idx=+target[1];
+if([...hole,...board].some(c=>c&&c.txt===card.txt)){alert('That card is already in the hand.');return}
+arr[idx]=card;slots();$('scanstatus').textContent='Added '+card.txt+'. Check the selected slot before calculating.';$('applyscan').disabled=true;
+};
+
 slots();if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script></body></html>
