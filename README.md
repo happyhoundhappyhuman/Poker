@@ -1,32 +1,32 @@
-# PokerIQ – Android-ready first version
+# PokerIQ V4 – Texas Hold’em Study App
 
-A responsive, installable Progressive Web App for Texas Hold'em study and post-hand review.
+An Android-installable Progressive Web App (PWA) for practice, post-hand review and poker study. It is not a native APK.
 
-## Run it
-1. Extract the ZIP.
-2. Host the folder on an HTTPS static host (GitHub Pages works).
-3. Open the published URL in Chrome on Android.
-4. Chrome menu → **Install app** / **Add to Home screen**.
+## Install on Android / host on GitHub Pages
+1. Extract the ZIP and upload the four files in this folder to a GitHub repository.
+2. In GitHub, open **Settings → Pages**, select the branch and root folder, then save.
+3. Open the published HTTPS address in Chrome on Android.
+4. Use Chrome’s menu → **Install app** / **Add to Home screen**.
 
-For local testing, serve the folder from a local web server; service workers require HTTPS or localhost.
+## V4 features
+- Manual 52-card picker for two hole cards and five community cards.
+- Monte Carlo equity simulation against 1–8 opponents.
+- Opponent presets: random, loose, standard and tight (heuristic approximations).
+- Pot odds and simplified call expected-value estimate.
+- Player position selector, included in saved hand notes.
+- Board texture summary: paired/unpaired, suit texture, connectivity and high-card density.
+- Next-card straight/flush completion counts from the flop or turn. These are raw completion cards, not guaranteed winning outs.
+- Guided table-photo scanner: crop one card at a time, OCR rank suggestion, confirm suit and destination. Manual rank entry remains available if OCR is unavailable.
+- Local hand history and CSV export.
+- Offline app shell via service worker; OCR library is loaded from a CDN and needs internet.
 
-## Included
-- Manual 52-card picker for two hole cards and up to five board cards.
-- Monte Carlo equity simulation against 1–8 random opponents.
-- Win / tie / loss and split-pot equity estimates.
-- Optional pot-odds threshold and simplified call EV.
-- Local hand history, CSV export.
-- Camera/file-picker capture for table photos or screenshots, with manual card entry.
+## Important limitations
+- The scanner is guided crop-and-confirm, not automatic recognition of every card in a table.
+- This app does not monitor live play, connect to poker rooms or automate decisions. Use it for study and post-hand review, and follow the rules of any poker platform.
+- Opponent range presets are simplified teaching heuristics, not statistically calibrated player models.
+- Straight/flush counts indicate cards that complete those hand categories on the next street; they do not account for opponent cards, redraws, counterfeit cards or whether the improvement wins.
+- Equity is a Monte Carlo estimate and varies between runs. Betting actions, folds, rake and future betting are not modelled.
+- Data is stored in the browser on the device. Clearing site data can erase saved hands.
 
-## Current limitations
-- This is a study tool, not a live poker-site assistant.
-- Image capture is included, but automatic card recognition and continuous live monitoring are not implemented in this first version.
-- Opponents are modelled as random hands; player ranges, betting actions, folds, rake and future betting are not modelled.
-- Equity is a Monte Carlo estimate, so results vary slightly with each run.
-
-All calculations happen in the browser. Hand history is stored locally on the device.
-
-## Version 3 additions
-- Guided multi-card table-photo workflow: upload one table image, drag a crop around a card, OCR the rank, confirm suit, and assign it to one of seven card slots.
-- Simplified opponent starting-hand presets: random, loose, standard and tight.
-- Range presets are heuristic teaching approximations, not calibrated player profiles.
+## Technical
+All poker calculations run locally in the browser. OCR uses Tesseract.js from jsDelivr when internet access is available. The app is a PWA; creating a signed Android APK would require a separate Android packaging/build step.
