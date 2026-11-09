@@ -1,0 +1,9 @@
+{
+  "name": "PokerIQ Hold'em Study",
+  "short_name": "PokerIQ",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#101827",
+  "description": "Texas Hold'em odds and hand review"
+}

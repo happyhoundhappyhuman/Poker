@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827"><meta name="description" content="Texas Hold'em poker odds and hand study tool">
+<link rel="manifest" href="manifest.json"><title>PokerIQ – Hold'em Study</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121e30;--panel2:#1a2940;--line:#2a3a52;--text:#eef4ff;--muted:#9fb0c7;--green:#42d392;--gold:#f5c86b;--red:#ff7777}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0d1829,#080e18 70%);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:20px 16px 14px;position:sticky;top:0;background:#0d1727ed;backdrop-filter:blur(12px);z-index:3;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#27bd86,#176b65);display:grid;place-items:center;font-size:22px;font-weight:900}
+h1{font-size:20px;margin:0}header p{margin:3px 0 0;color:var(--muted);font-size:12px}
+main{max-width:760px;margin:auto;padding:16px 14px 100px}.tabs{display:flex;gap:8px;overflow:auto;margin:4px 0 16px}.tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:10px 14px;border-radius:999px;white-space:nowrap}.tab.active{background:#174b42;border-color:#258b6b;color:#eafff6}
+.card{background:linear-gradient(145deg,var(--panel),#101a2a);border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 8px 24px #0002}
+h2{font-size:16px;margin:0 0 12px}h3{font-size:13px;color:var(--muted);font-weight:600;margin:16px 0 8px}
+.slotrow{display:flex;gap:9px;flex-wrap:wrap}.slot{width:54px;height:74px;border:1px dashed #53647d;border-radius:10px;background:#0b1422;color:#8394ac;display:grid;place-items:center;font-size:21px;font-weight:800}.slot.filled{background:#f5f7fa;color:#142033;border:1px solid white}.slot.red{color:#d33d50}
+button,select,input{font:inherit}.btn{border:0;border-radius:12px;padding:12px 15px;background:#20a878;color:#041a13;font-weight:800}.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}.btn:disabled{opacity:.45}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.field{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#0b1422;color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.metric{background:#0b1524;border:1px solid var(--line);border-radius:13px;padding:13px}.metric strong{font-size:25px;display:block}.metric span{color:var(--muted);font-size:12px}
+.bar{height:10px;background:#26354a;border-radius:20px;overflow:hidden;margin:8px 0}.bar>i{height:100%;display:block;background:var(--green);width:0}
+.note{font-size:12px;color:var(--muted);line-height:1.5}.hidden{display:none!important}.picker{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}.pick{padding:9px 0;border-radius:8px;border:1px solid var(--line);background:#18263a;color:var(--text);font-weight:700}.pick.red{color:#ff7d8d}.pick:disabled{opacity:.2}
+.historyitem{padding:10px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}.tag{font-size:11px;color:#9de8c8;background:#14382f;padding:4px 8px;border-radius:99px}
+footer{position:fixed;bottom:0;left:0;right:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));background:#0b1422ed;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:11px}
+@media(min-width:600px){.grid{grid-template-columns:repeat(4,1fr)}}
+</style></head>
+<body>
+<header><div class="brand"><div class="logo">♠</div><div><h1>PokerIQ <span style="color:#42d392">Study</span></h1><p>Texas Hold'em · Equity & hand review</p></div></div></header>
+<main>
+<div class="tabs"><button class="tab active" data-tab="analyze">Analyse</button><button class="tab" data-tab="capture">Camera / screenshot</button><button class="tab" data-tab="history">Hand history</button><button class="tab" data-tab="guide">How it works</button></div>
+<section id="analyze">
+<div class="card">
+<h2>Build your hand</h2>
+<p class="note">Tap a card slot, then choose a card. Add your two hole cards and any community cards known so far.</p>
+<h3>Your hole cards</h3><div class="slotrow" id="holeSlots"></div>
+<h3>Community cards</h3><div class="slotrow" id="boardSlots"></div>
+<div id="pickerWrap" class="hidden"><h3 id="pickerTitle">Choose a card</h3><div class="picker" id="picker"></div></div>
+<div class="actions"><button class="btn" id="run">Calculate odds</button><button class="btn secondary" id="clear">Clear hand</button></div>
+</div>
+<div class="card">
+<h2>Simulation settings</h2>
+<div class="grid">
+<label><span class="note">Opponents</span><select class="field" id="opponents"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label>
+<label><span class="note">Simulations</span><select class="field" id="trials"><option value="1000">1,000 · quick</option><option value="5000" selected>5,000 · standard</option><option value="15000">15,000 · detailed</option></select></label>
+<label><span class="note">Pot size (£ or chips)</span><input class="field" id="pot" type="number" min="0" placeholder="e.g. 100"></label>
+<label><span class="note">Call amount</span><input class="field" id="call" type="number" min="0" placeholder="e.g. 20"></label>
+</div><p class="note">Opponent cards are random unknown hands. Results are estimates, not guarantees.</p>
+</div>
+<div class="card hidden" id="results">
+<h2>Equity estimate</h2><div class="grid">
+<div class="metric"><strong id="win">—</strong><span>Win outright</span></div><div class="metric"><strong id="tie">—</strong><span>Tie / split pot</span></div><div class="metric"><strong id="lose">—</strong><span>Lose</span></div><div class="metric"><strong id="equity">—</strong><span>Pot equity (share)</span></div>
+</div><div class="bar"><i id="equitybar"></i></div><p id="handrank" class="note"></p><div class="grid"><div class="metric"><strong id="potodds">—</strong><span>Break-even call equity</span></div><div class="metric"><strong id="ev">—</strong><span>Call EV estimate</span></div></div><p class="note" id="advice"></p><p class="note" id="precision"></p><button class="btn secondary" id="save">Save to hand history</button>
+</div>
+</section>
+<section id="capture" class="hidden">
+<div class="card"><h2>Capture a table or screenshot</h2><p class="note">Choose a photo or take a picture. This first version stores the image for reference and lets you enter the visible cards manually. Automatic card recognition is not yet included.</p>
+<input class="field" id="photo" type="file" accept="image/*" capture="environment"><img id="preview" class="hidden" style="width:100%;margin-top:12px;border-radius:12px" alt="Selected poker table image"><div class="actions"><button class="btn secondary" id="toanalyse">Enter cards in analyser</button></div></div>
+<div class="card"><h2>Live camera limitation</h2><p class="note">Android browser camera capture is supported through the file picker. Continuous screen watching and automatic recognition need a later computer-vision module and must comply with the poker site's rules. Use this build for study, practice and post-hand review.</p></div>
+</section>
+<section id="history" class="hidden"><div class="card"><h2>Saved hands</h2><div id="historyList" class="note">No saved hands yet.</div><div class="actions"><button class="btn secondary" id="export">Export history (CSV)</button><button class="btn secondary" id="erase">Clear history</button></div></div></section>
+<section id="guide" class="hidden"><div class="card"><h2>Using PokerIQ</h2><ol class="note"><li>Select your two hole cards.</li><li>Select the community cards visible (0–5).</li><li>Choose the number of opponents and simulation count.</li><li>Calculate to estimate win, tie, loss and equity.</li><li>Optionally enter pot and call sizes to see break-even equity and estimated call EV.</li><li>Save hands to compare decisions during study sessions.</li></ol><h3>What the percentages mean</h3><p class="note"><b>Win:</b> share of simulated deals where your hand finishes ahead of every opponent. <b>Tie:</b> share where at least one opponent finishes level with you for the best result. <b>Equity:</b> your average fraction of the pot, including split pots.</p><h3>Important</h3><p class="note">The simulator assumes opponents' unknown cards are random. It does not model player ranges, betting actions, folds, tells or table dynamics. The output is a mathematical study estimate, not financial advice or a prediction.</p></div></section>
+</main><footer>For learning and hand review · No online-play automation</footer>
+<script>
+const suits=['♠','♥','♦','♣'], ranks=['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
+const deck=[]; for(let s=0;s<4;s++)for(let r=0;r<13;r++)deck.push({r:r+2,s,txt:ranks[r]+suits[s]});
+let hole=[null,null], board=[null,null,null,null,null], active=null, last=null, saved=JSON.parse(localStorage.getItem('pokeriq-history')||'[]');
+const $=id=>document.getElementById(id);
+function slots(){ $('holeSlots').innerHTML='';$('boardSlots').innerHTML='';
+ hole.forEach((c,i)=>makeSlot($('holeSlots'),c,()=>select('h',i),`Hole ${i+1}`));
+ board.forEach((c,i)=>makeSlot($('boardSlots'),c,()=>select('b',i),['Flop 1','Flop 2','Flop 3','Turn','River'][i]));}
+function makeSlot(parent,c,fn,label){let b=document.createElement('button');b.className='slot '+(c?'filled ':'')+(c&&[1,2].includes(c.s)?'red':'');b.textContent=c?c.txt:'＋';b.title=label;b.onclick=fn;parent.append(b)}
+function select(type,i){active={type,i};$('pickerWrap').classList.remove('hidden');$('pickerTitle').textContent='Choose '+(type==='h'?'hole card':'community card');renderPicker();$('pickerWrap').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function renderPicker(){let used=[...hole,...board].filter(Boolean).map(c=>c.txt);$('picker').innerHTML='';deck.forEach(c=>{let b=document.createElement('button');b.className='pick '+([1,2].includes(c.s)?'red':'');b.textContent=c.txt;b.disabled=used.includes(c.txt);b.onclick=()=>{(active.type==='h'?hole:board)[active.i]=c;active=null;$('pickerWrap').classList.add('hidden');slots()};$('picker').append(b)})}
+function clear(){hole=[null,null];board=[null,null,null,null,null];$('results').classList.add('hidden');$('pickerWrap').classList.add('hidden');slots()}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));['analyze','capture','history','guide'].forEach(x=>$(x).classList.toggle('hidden',x!==b.dataset.tab));if(b.dataset.tab==='history')renderHistory()});
+$('clear').onclick=clear;
+function combinations(a,k){let out=[];function rec(start,cur){if(cur.length===k){out.push(cur.slice());return}for(let i=start;i<=a.length-(k-cur.length);i++){cur.push(a[i]);rec(i+1,cur);cur.pop()}}rec(0,[]);return out}
+function score5(cards){let rs=cards.map(c=>c.r).sort((a,b)=>b-a), counts={};rs.forEach(r=>counts[r]=(counts[r]||0)+1);let groups=Object.entries(counts).map(([r,n])=>[n,+r]).sort((a,b)=>b[0]-a[0]||b[1]-a[1]);let flush=cards.every(c=>c.s===cards[0].s), uniq=[...new Set(rs)].sort((a,b)=>b-a);let straight=0;
+if(uniq.length===5){if(uniq[0]-uniq[4]===4)straight=uniq[0];else if(uniq.join(',')==='14,5,4,3,2')straight=5}
+if(flush&&straight)return [8,straight];
+if(groups[0][0]===4)return [7,groups[0][1],groups[1][1]];
+if(groups[0][0]===3&&groups[1][0]===2)return [6,groups[0][1],groups[1][1]];
+if(flush)return [5,...rs];if(straight)return [4,straight];
+if(groups[0][0]===3)return [3,groups[0][1],...groups.slice(1).map(x=>x[1])];
+if(groups[0][0]===2&&groups[1][0]===2)return [2,Math.max(groups[0][1],groups[1][1]),Math.min(groups[0][1],groups[1][1]),groups[2][1]];
+if(groups[0][0]===2)return [1,groups[0][1],...groups.slice(1).map(x=>x[1])];
+return [0,...rs]}
+function best7(cards){let best=null;for(const c of combinations(cards,5)){let sc=score5(c);if(!best||cmp(sc,best)>0)best=sc}return best}
+function cmp(a,b){for(let i=0;i<Math.max(a.length,b.length);i++){let d=(a[i]||0)-(b[i]||0);if(d)return d}return 0}
+const names=['High card','One pair','Two pair','Three of a kind','Straight','Flush','Full house','Four of a kind','Straight flush'];
+function simulate(){if(hole.some(x=>!x)){alert('Choose both hole cards first.');return}let known=[...hole,...board].filter(Boolean);if(new Set(known.map(c=>c.txt)).size!==known.length){alert('A card cannot be used twice.');return}
+let opp=+$('opponents').value, n=+$('trials').value, wins=0,ties=0,losses=0,equity=0;let remaining=deck.filter(c=>!known.some(k=>k.txt===c.txt));
+if(remaining.length<opp*2+(5-board.filter(Boolean).length)){alert('Not enough cards for this setup.');return}
+for(let t=0;t<n;t++){let pool=remaining.slice();for(let i=pool.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+let need=5-board.filter(Boolean).length, full=[...board.filter(Boolean),...pool.slice(0,need)];let cursor=need;let mine=best7([...hole,...full]);let oppScores=[];for(let p=0;p<opp;p++){oppScores.push(best7([...pool.slice(cursor,cursor+2),...full]));cursor+=2}
+let top=oppScores.reduce((a,b)=>cmp(b,a)>0?b:a,mine);let c=cmp(mine,top);if(c>0){wins++;equity++}else if(c===0){ties++;let tied=1+oppScores.filter(x=>cmp(x,mine)===0).length;equity+=1/tied}else losses++}
+let win=wins/n*100,tie=ties/n*100,lose=losses/n*100,eq=equity/n*100;
+$('win').textContent=win.toFixed(1)+'%';$('tie').textContent=tie.toFixed(1)+'%';$('lose').textContent=lose.toFixed(1)+'%';$('equity').textContent=eq.toFixed(1)+'%';$('equitybar').style.width=eq+'%';
+let visible=[...hole,...board.filter(Boolean)];let current=visible.length>=5?best7(visible):null;$('handrank').textContent=current?('Current made hand: '+names[current[0]]+(board.filter(Boolean).length<3?' · incomplete board; final ranking may change':'')):'Current made hand: not yet rankable (fewer than five cards).';
+let pot=+$('pot').value||0,call=+$('call').value||0,odds=(pot+call)>0?call/(pot+call)*100:0,ev=(pot+call)>0?(eq/100*(pot+call)-call):null;
+$('potodds').textContent=(pot+call)>0?odds.toFixed(1)+'%':'Enter pot + call';$('ev').textContent=ev===null?'—':(ev>=0?'+':'')+ev.toFixed(2);
+$('advice').textContent=ev===null?'Enter pot and call amounts to calculate a simplified call EV.':(eq>=odds?'Your estimated equity is above the break-even call threshold.':'Your estimated equity is below the break-even call threshold.')+' This ignores future betting and rake.';
+$('precision').textContent=n.toLocaleString()+' random deals simulated against '+opp+' opponent(s). Monte Carlo estimates vary between runs.';
+last={hole:hole.map(c=>c.txt),board:board.filter(Boolean).map(c=>c.txt),opp,n,win,tie,lose,eq,rank:names[current[0]],pot,call,odds,ev};$('results').classList.remove('hidden');$('results').scrollIntoView({behavior:'smooth'});}
+$('run').onclick=simulate;
+$('save').onclick=()=>{if(!last)return;saved.unshift({...last,date:new Date().toLocaleString()});saved=saved.slice(0,100);localStorage.setItem('pokeriq-history',JSON.stringify(saved));renderHistory();alert('Hand saved.')};
+function renderHistory(){let el=$('historyList');if(!saved.length){el.textContent='No saved hands yet.';return}el.innerHTML='';saved.forEach((h,i)=>{let d=document.createElement('div');d.className='historyitem';let a=document.createElement('div');a.innerHTML='<b>'+h.hole.join(' ')+'</b> · '+(h.board.join(' ')||'Pre-flop')+'<br><span class="note">'+h.date+' · '+h.opp+' opponents · '+h.n.toLocaleString()+' sims</span>';let b=document.createElement('span');b.className='tag';b.textContent=h.eq.toFixed(1)+'% equity';d.append(a,b);el.append(d)})}
+$('erase').onclick=()=>{if(confirm('Delete all saved hands?')){saved=[];localStorage.removeItem('pokeriq-history');renderHistory()}};
+$('export').onclick=()=>{let rows=[['date','hole','board','opponents','simulations','win_pct','tie_pct','loss_pct','equity_pct','rank'],...saved.map(h=>[h.date,h.hole.join(' '),h.board.join(' '),h.opp,h.n,h.win.toFixed(2),h.tie.toFixed(2),h.lose.toFixed(2),h.eq.toFixed(2),h.rank])];let csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='pokeriq-history.csv';a.click();URL.revokeObjectURL(a.href)};
+$('photo').onchange=e=>{let f=e.target.files[0];if(f){$('preview').src=URL.createObjectURL(f);$('preview').classList.remove('hidden')}};
+$('toanalyse').onclick=()=>document.querySelector('[data-tab="analyze"]').click();
+slots();if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script></body></html>
